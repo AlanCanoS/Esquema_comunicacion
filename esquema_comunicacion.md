@@ -4,7 +4,7 @@
 
 2. TRANSMISOR
 
-    La secuencia hexadecimal se codifica en un arreglo de piexeles.
+    La secuencia hexadecimal se codifica en un arreglo de pixeles.
 
     No se implementa el empaquetamiento!
 
