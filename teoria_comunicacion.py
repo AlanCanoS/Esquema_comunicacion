@@ -5,6 +5,7 @@ from io import BytesIO
 import matplotlib.pyplot as plt
 import time
 import random
+import math
 
 def fuente_informacion():
     print("Obteniendo la imagen....")
@@ -50,12 +51,15 @@ def canal(paquetes):
     paquetes_recibidos = []
     numeros_prob = list(range(1, 51))
     umbrales = [11,12,13,14,15,41,42,43,44,45]
+    entropia = 0
 
     print("Presencia de ruido en el canal...")
     for paquete in paquetes:
         numero_aleatorio = random.choice(numeros_prob)
         #print(numero_aleatorio)
         if numero_aleatorio in umbrales:
+            probabilidad_evento = 1/10
+            entropia += -probabilidad_evento * math.log2(probabilidad_evento)
             #Simular ruido cambiando algunos valores aleatorios en el paquete
             paquetes_recibidos.append(ruido(paquete))
         else:
@@ -63,7 +67,7 @@ def canal(paquetes):
 
         time.sleep(.01)
 
-    return paquetes_recibidos
+    return paquetes_recibidos,entropia
 
 def ruido(paquete):
 
@@ -117,7 +121,8 @@ paquetes,alto,ancho,canales = transmisor(img_original)
 
 
 # Simulamos el canal de transmisión
-paquetes_recibidos = canal(paquetes)
+paquetes_recibidos,entropia = canal(paquetes)
+print("Entropia: ",entropia)
 
 # Procedemos con la recepción y desempaquetado
 img_final = receptor(paquetes_recibidos, alto, ancho, canales)
