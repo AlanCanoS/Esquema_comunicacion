@@ -4,22 +4,23 @@
 
 2. TRANSMISOR
 
-    La secuencia hexadecimal se codifica en un arreglo de pixeles.
+    La secuencia hexadecimal se codifica en un arreglo de pixeles. 
 
-    No se implementa el empaquetamiento!
+    La imágen se codifica sumando 2 a cada unos de los pixeles.
+
+    Se implementa el empaquetamiento. Colocando como header [1,2,3,4] y tail [5,6,7,8]. Tomamos en cuenta 100 como el tamaños de los paquetes.
 
 3. Canal
 
-    El arreglo de pixeles se va enviando al receptor con un retraso de 2s para simular la velocidad.
+    Los paquetes se van enviando al receptor cada 0.01 segundos considerando una posibilidad de que el paquete se inserte ruido. Se creo una lista de números del 1 al 50 y una lista de umbrales del 11 al 15 y del 41 al 45 donde será el que detone el ruido si el valor aleatorio que va del 1 al 50 se enuentre en el umbral.
 
     Ruido
 
-        El ruido se provoca por transformacion de los datos. Se crea un arreglo de datos enteros aleatorios de las cuales se modifican de 
-        manera aleatoria valores del arreglo de pixeles.
+        El ruido se provoca por transformacion de los datos. Se modifica los valores de esos paquetes que fueron detonados por el ruido.
 
 4. Receptor
 
-    Decodifica el arreglo de pixeles a formato imagen.
+    Se desempaqueta quitando el header y tail. Ademas que se decodifica restandole el 2 que se sumó en el transmisor.
 
 5. Destino
 
