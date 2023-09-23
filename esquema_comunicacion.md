@@ -26,4 +26,8 @@
 
     Se visualiza la imagen.
 
+6. Entropia
+
+    Se anexa una funcion llamada entropia en la que calcula la entropia total del canal de informacion 
+    con la probabilidad en la que a cada paquete enviado se le agrego ruido.
 
