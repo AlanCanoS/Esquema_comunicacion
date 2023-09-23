@@ -8,7 +8,7 @@
 
     La imágen se codifica sumando 2 a cada unos de los pixeles.
 
-    Se implementa el empaquetamiento. Colocando como header [1,2,3,4] y tail [5,6,7,8]. Tomamos en cuenta 100 como el tamaños de los paquetes.
+    Se implementa el empaquetamiento. Colocando como header [1, 3, 5, 7] y tail [9, 11, 13, 15]. Tomamos en cuenta 100 como el tamaños de los paquetes.
 
 3. Canal
 
