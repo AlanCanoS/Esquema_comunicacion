@@ -6,21 +6,26 @@
 
     La secuencia hexadecimal se codifica en un arreglo de pixeles. 
 
-    La imágen se codifica sumando 2 a cada unos de los pixeles.
-
     Se implementa el empaquetamiento. Colocando como header [1, 3, 5, 7] y tail [9, 11, 13, 15]. Tomamos en cuenta 100 como el tamaños de los paquetes.
+
+    Se implemento 4 tipos de codificacion donde apartir de un menu se seleccionara ya sea Huffman, Shannon-Fano, Delta o Run-Length
+
+    Handshake
+
+        Se implemento la funcion handshake donde se establecera un acuerdo con el recepetor para saber como se enviara la informacion(codificacion)
 
 3. Canal
 
-    Los paquetes se van enviando al receptor cada 0.01 segundos considerando una posibilidad de que el paquete se inserte ruido. Se creo una lista de números del 1 al 50 y una lista de umbrales del 11 al 15 y del 41 al 45 donde será el que detone el ruido si el valor aleatorio que va del 1 al 50 se enuentre en el umbral.
+    Los paquetes se van enviando al receptor cada 0.01 segundos.
 
     Ruido
 
-        El ruido se provoca por transformacion de los datos. Se modifica los valores de esos paquetes que fueron detonados por el ruido.
+        Actualmente no se calcula el ruido.
+
 
 4. Receptor
 
-    Se desempaqueta quitando el header y tail. Ademas que se decodifica restandole el 2 que se sumó en el transmisor.
+    Se desempaqueta quitando el header y tail. Ademas que se decodifica de acuerdo al tipo de codificacion que se selecciono.
 
 5. Destino
 
@@ -28,6 +33,5 @@
 
 6. Entropia
 
-    Se anexa una funcion llamada entropia en la que calcula la entropia total del canal de informacion 
-    con la probabilidad en la que a cada paquete enviado se le agrego ruido.
+    Actualmente no se calcula la entropia.
 
