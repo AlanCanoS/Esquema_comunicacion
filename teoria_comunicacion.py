@@ -1,4 +1,3 @@
-# Importamos librerias
 import requests
 import numpy as np
 from PIL import Image
@@ -158,6 +157,8 @@ def transmisor(img_original):
         tipo_codificacion = 'Delta'
         print("Codificacion Delta con exito!")
 
+        paquetes_codificados = codificacion_type
+
 
     if handshake(tipo_codificacion,codificacion_type):
       print("Entendimiento con el receptor exitoso!")
@@ -169,30 +170,73 @@ def transmisor(img_original):
     return paquetes_codificados, codificacion_type, alto, ancho, canales, tipo_codificacion
 
 # Funcion canal
-def canal(paquetes):
+def canal(paquetes,tipo_codificacion):
 
-    print("Enviando paquetes por el canal...")
     paquetes_recibidos = []
-    numeros_prob = list(range(1, 51))
-    umbrales = [11,12,13,14,15,41,42,43,44,45]
+    #numeros_prob = list(range(1, 51))
+    #umbrales = [11,12,13,14,15,41,42,43,44,45]
     entropia_valores = []
 
     #print("Presencia de ruido en el canal...")
     #print(len(paquetes))
-    for paquete in paquetes:
-        #print(paquetes)
-        numero_aleatorio = random.choice(numeros_prob)
-        #print(numero_aleatorio)
-        if numero_aleatorio in umbrales:
-            # Obtenemos la probabilidad y la almacenamos en una lista
-            probabilidad_evento = 1/len(paquetes)
-            entropia_valores.append(probabilidad_evento)
-            #Simular ruido cambiando algunos valores aleatorios en el paquete
-            paquetes_recibidos.append(paquete)
-        else:
-            paquetes_recibidos.append(paquete)
+    
+    listas_nueva = []
+    for a in paquetes:
+        listas_nueva.append(['0'])
 
-    return paquetes_recibidos,entropia_valores
+    i = 0
+    canal = 0
+    paquetes_resagados = []
+
+    while i < (len(paquetes)-2):
+
+        if random.randint(1,3) == 3:
+            if canal == 4:
+                canal = 0
+                print("Presencia de ruido, cambiando de canal a: ",canal)
+                print("Paquete: ", i, "no enviado")
+                paquetes_resagados = i
+                print("Canal: ",canal, "Enviando paquetes: ",i+1, " ",i+2)
+                listas_nueva[i+1] = paquetes[i+1]
+                listas_nueva[i+2] = paquetes[i+2]
+                i = i + 3
+            else:
+                canal = canal + 1
+                print("Presencia de ruido, cambiando de canal a: ",canal)
+                print("Paquete: ", i, "no enviado")
+                paquetes_resagados = i
+                print("Canal: ",canal, "Enviando paquetes: ",i+1, " ",i+2)
+                listas_nueva[i+1] = paquetes[i+1]
+                listas_nueva[i+2] = paquetes[i+2]
+                i = i + 3
+        else:
+            print("Canal: ",canal, "Enviando paquetes: ", i," ",i+1," ",i+2)
+            listas_nueva[i] = paquetes[i]
+            listas_nueva[i+1] = paquetes[i+1]
+            listas_nueva[i+2] = paquetes[i+2]
+            i = i + 3
+
+        if paquetes_resagados != []:
+            print("Canal: ",canal, "Enviando paquete: ",paquetes_resagados)
+            listas_nueva[paquetes_resagados] = paquetes[paquetes_resagados]
+            paquetes_resagados = []
+
+    #------------
+
+    #for paquete in paquetes:
+        #print(paquetes)
+    #    numero_aleatorio = random.choice(numeros_prob)
+        #print(numero_aleatorio)
+    #    if numero_aleatorio in umbrales:
+            # Obtenemos la probabilidad y la almacenamos en una lista
+    #        probabilidad_evento = 1/len(paquetes)
+    #        entropia_valores.append(probabilidad_evento)
+            #Simular ruido cambiando algunos valores aleatorios en el paquete
+    #        paquetes_recibidos.append(paquete)
+    #    else:
+    #        paquetes_recibidos.append(paquete)
+
+    return listas_nueva,entropia_valores
 
 # Funcion receptor se aplica el desempaquetamiento  y la decodificacion, ademas que transformamos el arreglo a la forma de la imagen original
 def receptor(paquetes, codificacion_type, alto, ancho, canales,tipo_codificacion):
@@ -309,10 +353,11 @@ plt.show()
 
 # Empezamos el proceso de transmisión y por ende la codificacion
 paquetes,codificacion_type,alto,ancho,canales,tipo_codificacion = transmisor(img_original)
-#print(len(paquetes))
+print("paquetes: ",paquetes[:20])
+print("tamaño paquetes: ",len(paquetes))
 
 # Simulamos el canal de transmisión
-paquetes_recibidos,entropia_valores = canal(paquetes)
+paquetes_recibidos,entropia_valores = canal(paquetes,tipo_codificacion)
 
 
 # Calculamos la entropia
@@ -321,7 +366,7 @@ paquetes_recibidos,entropia_valores = canal(paquetes)
 
 
 # Procedemos con la recepción y desempaquetado
-img_final = receptor(paquetes,codificacion_type, alto, ancho, canales,tipo_codificacion)
+img_final = receptor(paquetes_recibidos,codificacion_type, alto, ancho, canales,tipo_codificacion)
 
 # Se muestra la imagen
 destino(img_final)
