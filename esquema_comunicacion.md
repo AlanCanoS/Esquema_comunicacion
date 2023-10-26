@@ -16,11 +16,8 @@
 
 3. Canal
 
-    Los paquetes se van enviando al receptor cada 0.01 segundos.
+    El canal se divide en 4 subcanales donde se mandaran los paquetes, de manera aleatoria se le aplicara ruido al canal el cual tendra que cambiar al siguiente canal la informacion y empezar con el paquete que se perdio gracias a la aplicacion de ruido.
 
-    Ruido
-
-        Actualmente no se calcula el ruido.
 
 
 4. Receptor
