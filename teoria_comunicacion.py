@@ -1,10 +1,12 @@
 import requests
 import numpy as np
 from PIL import Image
+import pandas as pd
 from io import BytesIO
 import matplotlib.pyplot as plt
 import time
 import random
+import hashlib
 import math
 from decimal import Decimal, getcontext
 from huffman_codi import huffman 
@@ -14,6 +16,19 @@ from delta import delta_encode
 
 
 # -----------------------Funciones-------------------------------------
+def busqueda_binaria(arr_hashes, arr_simbolos, elemento):
+    izquierda, derecha = 0, len(arr_hashes) - 1
+
+    while izquierda <= derecha:
+        medio = (izquierda + derecha) // 2
+        if arr_hashes[medio] == elemento:
+            return arr_simbolos[medio]  # Se encontró el elemento, devuelve el símbolo
+        elif arr_hashes[medio] < elemento:
+            izquierda = medio + 1
+        else:
+            derecha = medio - 1
+
+    return None  # El elemento no fue encontrado
 
 # Funcion fuente de informacion, obtenemos la imagen de una api
 def fuente_informacion():
@@ -23,6 +38,72 @@ def fuente_informacion():
     img_content = response.content
     img = Image.open(BytesIO(img_content))
     return img
+
+
+def hash_receptor(codificacion_type,tipo_codificacion):
+
+    hash_paquete = []
+
+    if tipo_codificacion == 'Huffman' or tipo_codificacion == 'Shannon-Fano':
+
+    # Obtener los códigos Huffman en una lista
+        codigos_huffman_lista = list(codificacion_type.values())
+
+        claves_huffman_lista = list(codificacion_type.keys())
+        
+        for val in codigos_huffman_lista:
+
+        
+            # Calcular el hash SHA-256
+            hash_paquete.append(hashlib.sha256(val.encode()).hexdigest())
+
+    elif tipo_codificacion == 'Run-Length':
+
+        codigos_huffman_lista = [''.join(map(str, arr)) for arr, _ in codificacion_type]
+        
+        claves_huffman_lista = codificacion_type.keys()
+        claves_huffman_lista = list(claves_huffman_lista)
+
+        for val in codigos_huffman_lista:
+            hash_paquete.append(hashlib.sha256(val.encode()).hexdigest())
+    
+    elif tipo_codificacion == 'Delta':
+
+        codigos_huffman_lista = [''.join(map(str, arr)) for arr in codificacion_type]
+
+        claves_huffman_lista = codificacion_type.keys()
+        claves_huffman_lista = list(claves_huffman_lista)
+
+        for val in codigos_huffman_lista:
+            hash_paquete.append(hashlib.sha256(val.encode()).hexdigest())
+        
+    df = pd.DataFrame()
+
+    df['Simbolos'] = claves_huffman_lista
+    df['Codigos'] = codigos_huffman_lista
+    df['Hash'] = hash_paquete
+
+    return df
+
+def hash_transmisor(img,tipo_codificacion):
+
+    paquetes_hash = []
+
+    if tipo_codificacion == 'Run-Length':
+        paquetes = [''.join(map(str, val)) for val in img]
+        paquetes_img = list(paquetes)
+        for val in paquetes_img:
+            paquetes_hash.append(hashlib.sha256(val.encode()).hexdigest())
+    elif tipo_codificacion == 'Delta':
+        paquetes = [''.join(map(str, val)) for val in img]
+        paquetes_img = list(paquetes)
+        for val in paquetes_img:
+            paquetes_hash.append(hashlib.sha256(val.encode()).hexdigest())
+    else:
+        for val in img:
+            paquetes_hash.append(hashlib.sha256(val.encode()).hexdigest())
+
+    return paquetes_hash
 
 # Funcion para ponerse de acuerdo con el receptor sobre la informacion 
 def handshake(tipo_codificacion,codigo_data):
@@ -101,6 +182,7 @@ def transmisor(img_original):
 
     # Calcula el total de repeticiones
     total_repeticiones = sum(repeticiones.values())
+    print(img_empaq[:50])
 
     # Normaliza las probabilidades dividiendo por el total de repeticiones
     for paquete, repeticion in repeticiones.items():
@@ -113,15 +195,15 @@ def transmisor(img_original):
     print("------------------Tipo de codificacion------------------")
     print("Digite 1 para codificar en Huffman ")
     print("Digite 2 para codificar en Shannon-Fano")
-    print("Digite 3 para codificar en Run-Length")
-    print("Digite 4 para codificar en Delta")
+    #print("Digite 3 para codificar en Run-Length")
+    #print("Digite 4 para codificar en Delta")
     opcion = input("Ingrese el numero de la opcion deseada: ")
     paquetes_codificados = []
 
     if opcion == '1':
 
         codificacion_type = huffman(repeticiones)
-
+        
 
         tipo_codificacion = 'Huffman'
         print("Codificacion huffman con exito!")
@@ -132,6 +214,8 @@ def transmisor(img_original):
     elif opcion == '2':
        
         codificacion_type = shannon_fano_codificacion(repeticiones)
+
+        
        
         tipo_codificacion = 'Shannon-Fano'
         print("Codificacion Shannon-Fano con exito!")
@@ -146,6 +230,8 @@ def transmisor(img_original):
         # Aplicamos RLE a la lista plana
         codificacion_type = rle_encode(img_empaq_plana)
 
+        
+
         tipo_codificacion = 'Run-Length'
         print("Codificacion Run-Length con exito!")
 
@@ -154,32 +240,32 @@ def transmisor(img_original):
     elif opcion == '4':
 
         codificacion_type = delta_encode(img_empaq)
+
+        
         tipo_codificacion = 'Delta'
         print("Codificacion Delta con exito!")
 
         paquetes_codificados = codificacion_type
-
+    
 
     if handshake(tipo_codificacion,codificacion_type):
       print("Entendimiento con el receptor exitoso!")
     else:
       print("Error al entenderse con el receptor!")
+    
+    paquetes_hash = hash_transmisor(paquetes_codificados,tipo_codificacion)
+    
+    print("Paquetes hasheados listos!")
+    print(paquetes_hash[:20])
 
 
     #print("Imágen empaquetada con exito y lista para su envio!")
-    return paquetes_codificados, codificacion_type, alto, ancho, canales, tipo_codificacion
+    return paquetes_hash, codificacion_type, alto, ancho, canales, tipo_codificacion
 
 # Funcion canal
-def canal(paquetes,tipo_codificacion):
+def canal(paquetes):
 
-    paquetes_recibidos = []
-    #numeros_prob = list(range(1, 51))
-    #umbrales = [11,12,13,14,15,41,42,43,44,45]
-    entropia_valores = []
 
-    #print("Presencia de ruido en el canal...")
-    #print(len(paquetes))
-    
     listas_nueva = []
     for a in paquetes:
         listas_nueva.append(['0'])
@@ -194,127 +280,62 @@ def canal(paquetes,tipo_codificacion):
             if canal == 4:
                 canal = 0
                 print("Presencia de ruido, cambiando de canal a: ",canal)
-                print("Paquete: ", i, "no enviado")
+                print("Paquete hasheado: ", i, "no enviado")
                 paquetes_resagados = i
-                print("Canal: ",canal, "Enviando paquetes: ",i+1, " ",i+2)
+                print("Canal: ",canal, "Enviando paquetes hasheados: ",i+1, " ",i+2)
                 listas_nueva[i+1] = paquetes[i+1]
                 listas_nueva[i+2] = paquetes[i+2]
                 i = i + 3
             else:
                 canal = canal + 1
                 print("Presencia de ruido, cambiando de canal a: ",canal)
-                print("Paquete: ", i, "no enviado")
+                print("Paquete hasheado: ", i, "no enviado")
                 paquetes_resagados = i
-                print("Canal: ",canal, "Enviando paquetes: ",i+1, " ",i+2)
+                print("Canal: ",canal, "Enviando paquetes hasheados: ",i+1, " ",i+2)
                 listas_nueva[i+1] = paquetes[i+1]
                 listas_nueva[i+2] = paquetes[i+2]
                 i = i + 3
         else:
-            print("Canal: ",canal, "Enviando paquetes: ", i," ",i+1," ",i+2)
+            print("Canal: ",canal, "Enviando paquetes hasheados: ", i," ",i+1," ",i+2)
             listas_nueva[i] = paquetes[i]
             listas_nueva[i+1] = paquetes[i+1]
             listas_nueva[i+2] = paquetes[i+2]
             i = i + 3
 
         if paquetes_resagados != []:
-            print("Canal: ",canal, "Enviando paquete: ",paquetes_resagados)
+            print("Canal: ",canal, "Enviando paquete hasheados: ",paquetes_resagados)
             listas_nueva[paquetes_resagados] = paquetes[paquetes_resagados]
             paquetes_resagados = []
 
-    #------------
 
-    #for paquete in paquetes:
-        #print(paquetes)
-    #    numero_aleatorio = random.choice(numeros_prob)
-        #print(numero_aleatorio)
-    #    if numero_aleatorio in umbrales:
-            # Obtenemos la probabilidad y la almacenamos en una lista
-    #        probabilidad_evento = 1/len(paquetes)
-    #        entropia_valores.append(probabilidad_evento)
-            #Simular ruido cambiando algunos valores aleatorios en el paquete
-    #        paquetes_recibidos.append(paquete)
-    #    else:
-    #        paquetes_recibidos.append(paquete)
-
-    return listas_nueva,entropia_valores
+    return listas_nueva
 
 # Funcion receptor se aplica el desempaquetamiento  y la decodificacion, ademas que transformamos el arreglo a la forma de la imagen original
 def receptor(paquetes, codificacion_type, alto, ancho, canales,tipo_codificacion):
 
-    if tipo_codificacion == 'Run-Length':
-        decoded_data = []
-        for data, count in codificacion_type:
-            for _ in range(count):
-                decoded_data.append(data)
-        
-        paquetes_desempaquetados = []
-        for paquete in decoded_data:
-            bloque = paquete[2:-2]  # Eliminar header y tail
-            paquetes_desempaquetados.append(bloque)
+    df_receptor = hash_receptor(codificacion_type,tipo_codificacion)
+    print("-------------------------------------------------")
+    print(df_receptor)
+    df_sorted_receptor = df_receptor.sort_values(by='Hash')
+    # Paso 1: Ordena el DataFrame por la columna "Hash"
+    #df_sorted_receptor = df_receptor.sort_values(by='Hash')
 
-        img_desempaquetada = [np.packbits(paquete) for paquete in paquetes_desempaquetados]
+    simbolos_finales = [busqueda_binaria(df_sorted_receptor['Hash'].tolist(), df_sorted_receptor['Simbolos'].tolist(), paquete) for paquete in paquetes]
 
-        img_desempaquetada = np.array(img_desempaquetada)
-
-        #print(img_desempaquetada[:20])
-        # Ajustar la forma de la matriz a las dimensiones originales
-        img_final = img_desempaquetada.reshape(alto, ancho, canales)
-
-        return img_final
-
-    elif tipo_codificacion == 'Delta':
-        decoded_data = [codificacion_type[0]]
-
-        # Iteramos a través de los datos codificados y calculamos los valores originales
-        for i in range(1, len(codificacion_type)):
-            original_value = decoded_data[i - 1] + codificacion_type[i]
-            decoded_data.append(original_value)
-        
-        paquetes_desempaquetados = []
-        for paquete in decoded_data:
+    print(simbolos_finales[:30])
+    paquetes_desempaquetados = []
+    for paquete in simbolos_finales:
             bloque = paquete[2:-2]  # Eliminar header y tail
             paquetes_desempaquetados.append(bloque)
     
-        img_desempaquetada = [np.packbits(paquete) for paquete in paquetes_desempaquetados]
+    img_desempaquetada = [np.packbits(paquete) for paquete in paquetes_desempaquetados]
 
-        img_desempaquetada = np.array(img_desempaquetada)
+    img_desempaquetada = np.array(img_desempaquetada)
 
         #print(img_desempaquetada[:20])
         # Ajustar la forma de la matriz a las dimensiones originales
-        img_final = img_desempaquetada.reshape(alto, ancho, canales)
-        return img_final
-
-    
-    else:
-            
-        codificacion_invertido = {v: k for k, v in codificacion_type.items()}
-
-        paquetes_recibidos = []
-
-        for i in range(0,len(paquetes)):
-            paquetes_recibidos.append((codificacion_invertido.get(paquetes[i],None)))
-            
-        #print(paquetes_recibidos[:10])
-
-        print("Imagen recibida por el receptor y desempaquetando...")
-        paquetes_desempaquetados = []
-
-        for paquete in paquetes_recibidos:
-            bloque = paquete[2:-2]  # Eliminar header y tail
-            paquetes_desempaquetados.append(bloque)
-            
-        img_desempaquetada = [np.packbits(paquete) for paquete in paquetes_desempaquetados]
-
-
-        img_desempaquetada = np.array(img_desempaquetada)
-
-        #print(img_desempaquetada[:20])
-
-        # Ajustar la forma de la matriz a las dimensiones originales
-        img_final = img_desempaquetada.reshape(alto, ancho, canales)
-        #print(img_final)
-
-        return img_final
+    img_final = img_desempaquetada.reshape(alto, ancho, canales)
+    return img_final
 
 # Funcion destino se muestra la imagen final 
 def destino(img_final):
@@ -353,11 +374,11 @@ plt.show()
 
 # Empezamos el proceso de transmisión y por ende la codificacion
 paquetes,codificacion_type,alto,ancho,canales,tipo_codificacion = transmisor(img_original)
-print("paquetes: ",paquetes[:20])
-print("tamaño paquetes: ",len(paquetes))
+#print("paquetes: ",paquetes[:20])
+#print("tamaño paquetes: ",len(paquetes))
 
 # Simulamos el canal de transmisión
-paquetes_recibidos,entropia_valores = canal(paquetes,tipo_codificacion)
+paquetes_recibidos = canal(paquetes)
 
 
 # Calculamos la entropia
