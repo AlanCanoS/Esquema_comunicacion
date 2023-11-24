@@ -28,7 +28,7 @@
 
     Se visualiza la imagen.
 
-6. Entropia
+6. Hash
 
-    Actualmente no se calcula la entropia.
+    Se hashean los paquetes antes de ser enviados al canal, cuando llegan al receptor, el receptor a su vez tendra que hashear el hanshake y aplicando BUSQUEDA BINARIA  van comparando los paquetes hasheados con los del handshake y retorna cuando encuentre la comparación regrese ya su valor binario.
 
